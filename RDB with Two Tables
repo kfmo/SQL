@@ -1,0 +1,60 @@
+Table Name: Employee
+
+Employee_id First_name    Last_name   Salary    Joining_date            Department    Order
+----------------------------------------------------------------------------------------------
+1           Roy           Thomas      700000    01-FEB-13 12.00.00 AM   Banking       3
+2           Michael       Clarke      800000    01-JAN-13 12.00.00 AM   Insurance     2
+3           John          Abraham     1000000   01-JAN-13 12.00.00 AM   Banking       5
+4           Tom           Jose        600000    01-FEB-13 12.00.00 AM   Insurance     4
+5           TestName1     123         650000    01-JAN-13 12.00.00 AM   Services      1
+6           Philip        Mathew      750000    01-JAN-13 12.00.00 AM   Services      8
+7           Jerry         Pinto       650000    01-FEB-13 12.00.00 AM   Insurance     10
+8           TestName2     Lname%      600000    01-FEB-13 12.00.00 AM   Insurance     6
+
+Table name: Incentives
+
+Employee_ref_id     Incentive_date  Incentive_amount
+--------------------------------------------------------
+1                   01-FEB-13       5000
+2                   01-FEB-13       3000
+3                   01-FEB-13       4000
+1                   01-JAN-13       4500
+2                   01-JAN-13       3500
+
+
+To generate a list of employees with a salary over $750,000:
+            SELECT First_name, Last_name
+            FROM Employee
+            WHERE salary > 750000;
+
+To find any users who may have invalid names (only alphabetic chars and hyphens allowed):
+            SELECT First_name, Last_name
+            FROM Employee
+            WHERE First_name RLIKE '^[^a-zA-Z-]+$' OR Last_name RLIKE '^[^a-zA-Z-]+$';
+    
+To generate a list of employees in the Banking department, sorted by join date:
+            SELECT First_name, Last_name, Joining_date
+            FROM Employee
+            WHERE Department = 'Banking'
+            ORDER BY Joining_date;
+
+To get the employees who all have incentive dates in Feburary:
+            SELECT First_name, Last_name, Incentive_date
+            FROM Employee
+            JOIN Incentives ON Employee.Employee_id = Incentives.Employee_ref_id
+            WHERE MONTH(Incentive_date) = 2;
+
+To generate a list of usernames, making it the first initial and last name, in lower case format (example result: Roy Thomas = rthomas):
+            SELECT Employee_id, First_name, Last_name, LOWER(CONCAT(LEFT(First_name, 1), Last_name)) AS usernames
+            FROM Employee;
+
+To get a list of the employees, sorted (ascending) by the "order" column, only returning 4 rows:
+            SELECT First_name, Last_name
+            FROM Employee
+            ORDER BY `Order` LIMIT 4;
+
+To generate a list of the 3 newest employees in the Banking department or Services department:
+            SELECT First_name, Last_name, Joining_date, Department
+            FROM Employee
+            WHERE Department = 'Banking' OR Department = 'Services
+            ORDER BY Joining_date DESC LIMIT 3;
