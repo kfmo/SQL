@@ -1,0 +1,108 @@
+Table name: employee		
+
+employee_id		int
+name	        	varchar
+job_title		varchar
+level_sk		int
+dept_sk	          	int
+manager_id		int
+location_sk		int
+salary	        	int
+start_date		date
+term_date		date
+
+Table name: level		
+level_sk		int
+level_name		varchar
+
+Table name: department		
+dept_sk		        int
+dept_name		varchar
+
+Table name: location		
+location_sk		int
+city		        varchar
+state	        	varchar
+country		        varchar
+
+
+To select the employee in each department with the highest salary in the US, including employee name, department name, and salary:
+        SELECT emp.name, dpt.dept_name, emp.salary
+        FROM employee emp, department dpt
+        WHERE emp.salary IN (
+                              SELECT dept_sk, max(salary)
+                              FROM employee
+                              GROUP BY dept_sk
+                              )
+        INNER JOIN
+           (
+            SELECT country
+            FROM location
+            WHERE country = US
+           ) USemp
+             on emp.location_sk = USemp.location_sk
+        INNER JOIN
+           (
+            SELECT dept_name
+            FROM department
+           ) USdpt
+             on emp.dept_sk = Usdpt.dept_sk;
+             
+To select the top 5 employees in each department with the highest salaries in the US, including employee names, department names, and salaries:             
+        SET @rowNum = 0;
+
+        SELECT emp.name, dpt.dept_name, emp.salary
+        FROM
+           (
+            SELECT 
+            emp.name,
+            dpt.dept_name,
+            @rowNum := IF(@salaryMax = max(emp.salary), @rowNum + 1, 1) AS salary,
+            @salaryMax := emp.salary
+            FROM employee emp, department dpt
+            ORDER BY dpt.dept_name, emp.salary DESC, emp.name
+           ) topFive      
+        WHERE rowNum <= 5
+       
+        INNER JOIN
+           (
+            SELECT country
+            FROM location
+            WHERE country = US
+           ) USemp
+             on emp.location_sk = USemp.location_sk
+        
+        INNER JOIN
+           (
+            SELECT dept_name
+            FROM department
+           ) USdpt
+             on emp.dept_sk = Usdpt.dept_sk;
+             
+To create a flat table in the database with information from all tables for the department of S&M:             
+        CREATE TABLE IF NOT EXISTS S&MInfo
+        SELECT *
+        FROM employee emp, level lvl, department dpt, location loc
+        WHERE dpt.dept_name = S&M
+           AND emp.dept_sk = dpt.dept_sk
+           AND emp.level_sk = lvl.level_sk
+           AND emp.location_sk = loc.location_sk;
+           
+To pull a list of managers and their direct reports, including IDs and names for both the manager and direct reports:           
+        SELECT DISTINCT manager_id, employee_id, name  
+        FROM employee
+        ORDER BY IFNULL(manager_id), employee_id;
+
+To find the number of employees that started at the company each quarter:
+        SELECT QUARTER(start_date) AS quarter of year, COUNT(employee_id) AS number of employees that started
+        FROM employee
+        GROUP BY quarter of year
+        ORDER BY quarter of year;
+        
+To find the average tenure of all employees by level (if an employee is still at the company, term_date is null; in that case, today's date is used to calculate tenure):        
+        SELECT lvl.level_name AS levelName,
+            IF(emp.term_date IS NOT NULL, AVG(DATEDIFF(emp.term_date, emp.start_date)), AVG(DATEDIFF(CURDATE(), emp.start_date))) AS avgTenure
+        FROM level lvl, employee emp
+        WHERE lvl.level_sk = emp.level_sk
+        GROUP BY levelName;
+
